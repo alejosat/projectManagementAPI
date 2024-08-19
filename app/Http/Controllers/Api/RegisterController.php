@@ -63,4 +63,15 @@ class RegisterController extends Controller
             'message' => 'Unauthorized, invalid credentials',
         ], 401);
     }
+
+    public function logout(Request $request)
+    {
+        // Revoca el token actual del usuario autenticado
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User logged out successfully',
+        ], 200);
+    }
 }

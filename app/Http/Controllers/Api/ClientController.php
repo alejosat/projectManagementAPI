@@ -27,13 +27,21 @@ class ClientController extends Controller
     {
         $validateData = $request->validated();
 
-        $client = Client::create($validateData);
+        try {
+            $client = Client::create($validateData);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Client created successfully',
-            'data' => $client
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Client created successfully',
+                'data' => $client
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'sucess' => false,
+                'message' => 'An error occurred while creating the client',
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -58,24 +66,31 @@ class ClientController extends Controller
      */
     public function update(UpdateClientRequest $request, string $id)
     {
-        $client = Client::find($id);
+        try {
+            $client = Client::findOrFail($id);
 
-        if (!$client) {
+            $validateData = $request->validated();
+
+            $client->update($validateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Client updated successfully',
+                'data' => $client
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Client not found'
             ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the client',
+                'error' => $e->getMessage()
+            ], 500);
         }
 
-        $validateData = $request->validated();
-
-        $client->update($validateData);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Client updated successfully',
-            'data' => $client
-        ], 200);
     }
 
     /**
@@ -97,6 +112,6 @@ class ClientController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Client deleted successfully'
-        ], 204);
+        ], 200);
     }
 }

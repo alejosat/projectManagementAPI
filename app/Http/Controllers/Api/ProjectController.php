@@ -15,7 +15,7 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $projects = Project::with('client', 'user')->first();
+        $projects = Project::with('client', 'user')->get();
 
         return response()->json($projects);
     }
@@ -27,13 +27,23 @@ class ProjectController extends Controller
     {
         $validateData = $request->validated();
 
-        $project = Project::create($validateData);
+        try {
+            $project = Project::create($validateData);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Project created successfully',
-            'data' => $project->load('client', 'user')
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Project created successfully',
+                'data' => $project->load('client', 'user')
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'sucess' => false,
+                'message' => 'An error occurred while creating the project',
+                'error' => $e->getMessage()
+            ]);
+        }
+
     }
 
     /**
@@ -58,24 +68,29 @@ class ProjectController extends Controller
      */
     public function update(UpdateProjectRequest $request, string $id)
     {
-        $validateData = $request->validated();
+        try {
 
-        $project = Project::find($id);
+            $project = Project::findOrFail($id);
 
-        if (!$project) {
+            $project->update($request->validated());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Project updated successfully',
+                'data' => $project->load('client', 'user')
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Project not found'
             ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the project',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $project->update($validateData);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Project updated successfully',
-            'data' => $project->load('client', 'user')
-        ]);
     }
 
     /**

@@ -27,13 +27,21 @@ class TaskController extends Controller
     {
         $validateData = $request->validated();
 
-        $task = Task::create($validateData);
+        try {
+            $task = Task::create($validateData);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Task created successfully',
-            'data' => $task->load('project')
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Task created successfully',
+                'data' => $task->load('project')
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'sucess' => false,
+                'message' => 'An error occurred while creating the task',
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -58,24 +66,30 @@ class TaskController extends Controller
      */
     public function update(UpdateTaskRequest $request, string $id)
     {
-        $task = Task::find($id);
+        try {
+            $validateData = $request->validated();
 
-        if (!$task) {
+            $task = Task::findOrFail($id);
+
+            $task->update($validateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task updated successfully',
+                'data' => $task->load('project')
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Task not found'
             ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the task',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $validateData = $request->validated();
-
-        $task->update($validateData);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Task updated successfully',
-            'data' => $task->load('project')
-        ], 200);
     }
 
     /**
